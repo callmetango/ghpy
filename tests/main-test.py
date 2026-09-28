@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import ANY, Mock, patch
 
@@ -14,6 +15,7 @@ def Given_a_successful_command():
 	FILE = __file__
 	FILE_PATH = Path(FILE)
 
+	ENV = {"GH_TOKEN": "test-token"}
 	ARGS = [
 		"ghpy", "release", "upload",
 		"--repo", f"{OWNER}/{REPO}",
@@ -26,10 +28,13 @@ def Given_a_successful_command():
 
 	def When_the_command_is_run():
 
-		with patch("sys.argv", ARGS):
-			with patch("ghpy.main.Releases", return_value=releases):
-				with patch("ghpy.main.dispatch") as dispatch:
-					result = main()
+		with ExitStack() as stack:
+			stack.enter_context(patch.dict("os.environ", ENV))
+			stack.enter_context(patch("sys.argv", ARGS))
+			stack.enter_context(patch("ghpy.main.Releases", return_value=releases))
+			dispatch = stack.enter_context(patch("ghpy.main.dispatch"))
+
+			result = main()
 
 		def Then_the_command_is_dispatched():
 
@@ -45,6 +50,7 @@ def Given_a_successful_command():
 
 def Given_a_command_that_fails_with_an_operation_error():
 
+	ENV = {"GH_TOKEN": "test-token"}
 	ARGS = [
 		"ghpy", "release", "upload",
 		"--repo", "owner/repo",
@@ -57,11 +63,16 @@ def Given_a_command_that_fails_with_an_operation_error():
 
 	def When_the_command_is_run():
 
-		with patch("sys.argv", ARGS):
-			with patch("ghpy.main.Releases", return_value=releases):
-				with patch("ghpy.main.dispatch",
-						side_effect=OperationError("Operation failed")):
-					result = main()
+		with ExitStack() as stack:
+			stack.enter_context(patch.dict("os.environ", ENV))
+			stack.enter_context(patch("sys.argv", ARGS))
+			stack.enter_context(patch("ghpy.main.Releases", return_value=releases))
+			stack.enter_context(
+				patch("ghpy.main.dispatch",
+					side_effect=OperationError("Operation failed"))
+			)
+
+			result = main()
 
 		def Then_the_command_fails():
 			assert result == 1
@@ -71,6 +82,7 @@ def Given_a_command_that_fails_with_a_ghpy_error():
 
 	ERROR = GhpyError("Operation failed")
 
+	ENV = {"GH_TOKEN": "test-token"}
 	ARGS = [
 		"ghpy", "release", "upload",
 		"--repo", "owner/repo",
@@ -82,10 +94,13 @@ def Given_a_command_that_fails_with_a_ghpy_error():
 
 	def When_the_command_is_run():
 
-		with patch("sys.argv", ARGS):
-			with patch("ghpy.main.Releases", return_value=releases):
-				with patch("ghpy.main.logging.error") as error:
-					result = main()
+		with ExitStack() as stack:
+			stack.enter_context(patch.dict("os.environ", ENV))
+			stack.enter_context(patch("sys.argv", ARGS))
+			stack.enter_context(patch("ghpy.main.Releases", return_value=releases))
+			error = stack.enter_context(patch("ghpy.main.logging.error"))
+
+			result = main()
 
 		def Then_the_command_fails():
 			assert result == 1
