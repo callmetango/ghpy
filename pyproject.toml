@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ghpy"
+version = "0.3.0"
+description = "A lightweight GitHub release command-line tool"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [
+	{ name = "callmetango" },
+]
+classifiers = [
+	"Development Status :: 4 - Beta",
+	"Environment :: Console",
+	"Intended Audience :: Developers",
+	"Operating System :: OS Independent",
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3 :: Only",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12",
+	"Programming Language :: Python :: 3.13",
+	"Programming Language :: Python :: 3.14",
+	"Topic :: Utilities",
+]
+dependencies = [
+	"dargpy>=0.3.2"
+
+]
+
+[project.optional-dependencies]
+test = [
+	"pytest",
+	"pytest-describe",
+]
+
+[project.scripts]
+ghpy = "ghpy.main:main"
+
+[project.urls]
+Repository = "https://github.com/callmetango/ghpy"
+Issues = "https://github.com/callmetango/ghpy/issues"
+
+[tool.pytest.ini_options]
+python_files = ["*-test.py"]
+describe_prefixes = ["Given_", "When_"]
+filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
+]

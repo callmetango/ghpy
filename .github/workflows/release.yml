@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Clone repository
+        run: |
+          git clone "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_WORKSPACE" \
+              --branch "$GITHUB_REF_NAME" --depth 1 --single-branch
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Run tests
+        run: |
+          python -m pip install ".[test]" && python -m pytest
+
+      - name: Create release
+        run: |
+          gh release create --generate-notes --repo "$GITHUB_REPOSITORY" \
+              "$GITHUB_REF_NAME"
+
+      - name: Publish package
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/dispatches" \
+              --method POST \
+              -f event_type=publish \
+              -f "client_payload[tag]=$GITHUB_REF_NAME"

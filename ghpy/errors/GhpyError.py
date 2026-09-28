@@ -1,0 +1,2 @@
+class GhpyError(Exception):
+	pass
